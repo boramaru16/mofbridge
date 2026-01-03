@@ -1,23 +1,56 @@
-# Blender Ministry of Flat Bridge Addon
+# Blender MOF Bridge
 
-This addon serves as a bridge between Blender and the **Ministry of Flat** UV unwrapping tool, available at [https://www.quelsolaar.com/ministry_of_flat/](https://www.quelsolaar.com/ministry_of_flat/). It automates the process of exporting objects from Blender, unwrapping their UVs using Ministry of Flat, and reimporting the results back into Blender. The initial version for this addon was written in the article [https://techracho.bpsinc.jp/ecn/2024_08_22/144348](https://techracho.bpsinc.jp/ecn/2024_08_22/144348) by [@techracho](https://x.com/techracho). 
+Unwrap your objects with MINISTRY OF FLAT. Hail Ministry of Flat, your flatness!!!
+
+This Blender addon integrates Ministry of Flat (MOF) UV unwrapping tool into Blender, allowing automatic UV unwrapping of selected objects.
+
+## Features
+
+- Automatic UV unwrapping using Ministry of Flat
+- Option to separate hard edges
+- Automatic UV packing after unwrapping
+- Switch to UV edit mode after completion
+- Sidebar panel for easy access
+
+## Requirements
+
+- Blender 2.80 or later
+- Ministry of Flat installed on your system
 
 ## Installation
 
-1. Download the `.py` file for the addon.
-2. Open Blender and go to `Edit > Preferences > Add-ons`.
-3. Click `Install...` and select the downloaded `.py` file.
-4. Enable the addon by checking the box next to it.
-5. Select **the path to Ministry of Flat executables** in the addon settings.
-
----
+1. Download the `mofbridge.py` file
+2. In Blender, go to Edit > Preferences > Add-ons
+3. Click "Install..." and select the `mofbridge.py` file
+4. Enable the addon "Blender MOF Bridge"
+5. In the addon preferences, set the path to the folder containing `UnWrapConsole3.exe` from Ministry of Flat
 
 ## Usage
 
-1. Select one or more objects in Blender.
-2. Go to the `Object` menu in the 3D Viewport.
-3. Click `Unwrap in Ministry of Flat` to start the process.
-4. The addon will export the objects, unwrap their UVs using Ministry of Flat, and reimport the results.
+1. Select the objects you want to unwrap
+2. In the 3D Viewport, go to the "MOF Bridge" tab in the sidebar (N key)
+3. Click "Unwrap in Ministry of Flat"
+4. Or use Object > Unwrap in Ministry of Flat from the menu
+
+## Configuration
+
+In the addon preferences (Edit > Preferences > Add-ons > Blender MOF Bridge):
+
+- **MOF folder**: Path to the folder containing Ministry of Flat executable
+- **Separate edges**: Guarantees that all hard edges are separated (useful for lightmapping and normal mapping)
+- **Pack after unwrap**: Automatically pack UV islands in Blender
+- **Show UV when done**: Switch to edit mode and show UV editor after unwrapping
+
+## License
+
+This addon is released under the same license as the original mofbridge by rentanek0.
+
+## Credits
+
+- Original author: rentanek0
+- Ministry of Flat: https://www.quelsolaar.com/ministry_of_flat/
+- Repository: https://github.com/garanovich/mofbridge/
+
 
 ---
 

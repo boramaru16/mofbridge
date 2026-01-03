@@ -6,7 +6,19 @@ import re  # For cleaning up object names
 
 bl_info = {
     "name": "Blender MOF Bridge",
-    "description": "Unwrap your objects with MINISTRY OF FLAT. Hail Ministry of Flat, your flatness!!!",
+    "description": "Unwrap your objects with MINISTRY OF Fdef register():
+    """Addon activation process"""
+    bpy.utils.register_class(MyAddonPreferences)
+    bpy.utils.register_class(AutoUV)
+    bpy.utils.register_class(MOF_BRIDGE_PT_panel)  # Register panel class
+    
+    try:
+        bpy.types.VIEW3D_MT_object.append(menu_func)
+        print("✓ MOF Bridge: Menu registration successful (VIEW3D_MT_object)")
+    except AttributeError:
+        print("⚠ MOF Bridge: Menu registration failed")
+    
+    print("✓ MOF Bridge: Panel registration successful (sidebar tab)")istry of Flat, your flatness!!!",
     "blender": (2, 80, 0),
     "category": "UV",
     "location": "Object > Unwrap in Ministry of Flat",
@@ -86,8 +98,43 @@ class AutoUV(bpy.types.Operator):
         folder_path = preferences.folder_path  # Path to Ministry of Flat
         path = os.path.join(folder_path, "UnWrapConsole3.exe")
 
-        separate = "TRUE" if preferences.separate else "FALSE" #separate edges or not
-        os.system(f"{path} {fn} {fn2} -CUTDEBUG FALSE -SEPARATE {separate}")  # Run Ministry of Flat
+        if not os.path.isfile(path):
+            self.report({'ERROR'}, f"MOF executable not found: {path}")
+            print(f"✗ MOF Bridge: Executable not found: {path}")
+            print(f"  Configured folder: {folder_path}")
+            return {"CANCELLED"}
+
+        separate = "TRUE" if preferences.separate else "FALSE"  # separate edges or not
+        
+        import subprocess
+        cmd = [path, fn, fn2, "-CUTDEBUG", "FALSE", "-SEPARATE", separate]
+        print(f"✓ MOF Bridge: Execute command: {' '.join(cmd)}")
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            print(f"  MOF exit code: {result.returncode}")
+            if result.stdout:
+                print(f"  MOF output: {result.stdout}")
+            if result.stderr:
+                print(f"  MOF error: {result.stderr}")
+            
+            if result.returncode != 0:
+                self.report({'ERROR'}, f"MOF execution failed (exit code: {result.returncode})")
+                return {"CANCELLED"}
+        except subprocess.TimeoutExpired:
+            self.report({'ERROR'}, "MOF execution timed out (over 5 minutes)")
+            return {"CANCELLED"}
+        except Exception as e:
+            self.report({'ERROR'}, f"Error during MOF execution: {e}")
+            print(f"✗ MOF Bridge: Execution error: {e}")
+            return {"CANCELLED"}
+
+        if not os.path.isfile(fn2):
+            self.report({'ERROR'}, f"MOF did not generate output file: {fn2}")
+            print(f"✗ MOF Bridge: Output file does not exist: {fn2}")
+            return {"CANCELLED"}
+
+        print(f"✓ MOF Bridge: Output file confirmed: {fn2}")
 
         # Step 3: Import the result of UV unwrapping
         bpy.ops.wm.obj_import(filepath=fn2)
@@ -136,16 +183,21 @@ class AutoUV(bpy.types.Operator):
             wm = bpy.context.window_manager
             wm.progress_begin(0, 99)
             wm.progress_update(77)
-            # Step 6: Pack UV islands
-            bpy.ops.object.mode_set(mode='EDIT')  # Switch to Edit Mode
-            bpy.ops.mesh.select_all(action='SELECT')
-            bpy.context.area.ui_type = 'UV'
-            bpy.ops.uv.select_all(action='SELECT')  # Select all UVs
-            #bpy.ops.uv.pack_islands()
-            bpy.ops.uv.pack_islands(margin=0.001)  # Pack UV islands with a margin of 0.001
-            bpy.context.area.type = 'VIEW_3D'
-            bpy.ops.object.mode_set(mode='OBJECT')  # Switch back to Object Mode
-            wm.progress_end()
+            
+            try:
+                # Step 6: Pack UV islands
+                bpy.ops.object.mode_set(mode='EDIT')  # Switch to Edit Mode
+                bpy.ops.mesh.select_all(action='SELECT')
+                
+                with bpy.context.temp_override():
+                    bpy.ops.uv.select_all(action='SELECT')
+                    bpy.ops.uv.pack_islands(margin=0.001)
+                
+                bpy.ops.object.mode_set(mode='OBJECT')  # Switch back to Object Mode
+            except RuntimeError as e:
+                print(f"⚠ MOF Bridge: Error in UV packing process: {e}")
+            finally:
+                wm.progress_end()
 
         if preferences.showUV: bpy.ops.object.mode_set(mode='EDIT')            
 
@@ -154,20 +206,72 @@ class AutoUV(bpy.types.Operator):
         return {"FINISHED"}  # Operation completed
 
 
+class MOF_BRIDGE_PT_panel(bpy.types.Panel):
+    """MOF Bridge Panel - 3D Viewport Sidebar"""
+    bl_label = "MOF Bridge"
+    bl_idname = "MOF_BRIDGE_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "MOF Bridge"
+
+    @classmethod
+    def poll(cls, context):
+        """Conditions for panel display"""
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        
+        row = layout.row()
+        row.scale_y = 2.0
+        row.operator(AutoUV.bl_idname, text="Unwrap in Ministry of Flat", icon="UV")
+        
+        layout.separator()
+        
+        layout.label(text="Settings:", icon="PREFERENCES")
+        
+        row = layout.row()
+        row.operator("preferences.addon_show", text="Open Preferences").module = __name__
+        
+        layout.separator()
+        layout.label(text="Status Information:", icon="INFO")
+        row = layout.row()
+        if context.selected_objects:
+            row.label(text=f"Selected: {len(context.selected_objects)} object(s)")
+        else:
+            row.label(text="No objects selected")
+
+
 def menu_func(self, context):
     self.layout.operator(AutoUV.bl_idname)  # Add operator to the menu
 
 
 def register():
+    """Addon activation process"""
     bpy.utils.register_class(MyAddonPreferences)
     bpy.utils.register_class(AutoUV)
-    bpy.types.VIEW3D_MT_object.append(menu_func)  # Add item to the object menu
+    bpy.utils.register_class(MOF_BRIDGE_PT_panel)
+    
+    try:
+        bpy.types.VIEW3D_MT_object.append(menu_func)
+        print("✓ MOF Bridge: Menu registration successful (VIEW3D_MT_object)")
+    except AttributeError:
+        print("⚠ MOF Bridge: Menu registration failed")
+    
+    print("✓ MOF Bridge: Panel registration successful (sidebar tab)")
 
 
 def unregister():
-    bpy.utils.unregister_class(MyAddonPreferences)
+    """Addon deactivation process"""
+    try:
+        bpy.types.VIEW3D_MT_object.remove(menu_func)
+    except ValueError:
+        pass
+    
+    bpy.utils.unregister_class(MOF_BRIDGE_PT_panel)
     bpy.utils.unregister_class(AutoUV)
-    bpy.types.VIEW3D_MT_object.remove(menu_func)  # Remove item from the object menu
+    bpy.utils.unregister_class(MyAddonPreferences)
 
 
 if __name__ == "__main__":
